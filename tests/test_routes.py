@@ -124,7 +124,8 @@ class TestAccountService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     # ADD YOUR TEST CASES HERE ...
-   # ADD YOUR TEST CASES HERE ...
+  
+
 def test_get_account(self):
     """It should Read a single Account"""
     account = self._create_accounts(1)[0]
@@ -147,3 +148,49 @@ def test_get_account_list(self):
     self.assertEqual(resp.status_code, status.HTTP_200_OK)
     data = resp.get_json()
     self.assertEqual(len(data), 5)
+
+def test_update_account(self):
+    """It should Update an existing Account"""
+    # Create one account first
+    account = self._create_accounts(1)[0]
+
+    # Prepare new data to update
+    updated_data = {
+        "name": "Updated Name",
+        "email": "updated_email@example.com",
+        "address": "123 Updated Street",
+        "phone_number": "555-555-5555",
+    }
+
+    # Send the PUT request to update the account
+    resp = self.client.put(
+        f"{BASE_URL}/{account.id}",
+        json=updated_data,
+        content_type="application/json"
+    )
+
+    self.assertEqual(resp.status_code, status.HTTP_200_OK)
+    data = resp.get_json()
+
+    # Verify the account data was updated correctly
+    self.assertEqual(data["name"], updated_data["name"])
+    self.assertEqual(data["email"], updated_data["email"])
+    self.assertEqual(data["address"], updated_data["address"])
+    self.assertEqual(data["phone_number"], updated_data["phone_number"])
+
+def test_update_account_not_found(self):
+    """It should not Update an Account that does not exist"""
+    updated_data = {
+        "name": "Should Not Exist",
+        "email": "noone@example.com",
+        "address": "Nowhere",
+        "phone_number": "000-000-0000",
+    }
+
+    resp = self.client.put(
+        f"{BASE_URL}/0",
+        json=updated_data,
+        content_type="application/json"
+    )
+
+    self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
