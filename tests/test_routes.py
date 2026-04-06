@@ -8,16 +8,16 @@ Test cases can be run with the following:
 import os
 import logging
 from unittest import TestCase
-from tests.factories import AccountFactory
-from service.common import status  # HTTP Status Codes
-from service.models import db, Account, init_db
-from service.routes import app
+from flask import Flask
+from your_app_module import app, init_db, DATABASE_URI, status  # <-- replace your_app_module with actual module
+from service.models import db, Account
+from service.factories import AccountFactory
 
-DATABASE_URI = os.getenv(
-    "DATABASE_URI", "postgresql://postgres:postgres@localhost:5432/postgres"
-)
-
+# Base URL for the endpoints being tested
 BASE_URL = "/accounts"
+
+# Simulate HTTPS requests
+HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 
 
 ######################################################################
@@ -34,6 +34,21 @@ class TestAccountService(TestCase):
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
         init_db(app)
+        cls.client = app.test_client()  # Flask test client for making requests
+        talisman.force_https = False
+
+    def test_security_headers(self):
+        """It should return security headers"""
+        response = self.client.get(BASE_URL, environ_overrides=HTTPS_ENVIRON)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        headers = {
+            'X-Frame-Options': 'SAMEORIGIN',
+            'X-Content-Type-Options': 'nosniff',
+            "Content-Security-Policy": "default-src 'self'; object-src 'none'",
+            'Referrer-Policy': 'strict-origin-when-cross-origin'
+        }
+        for key, value in headers.items():
+            self.assertEqual(response.headers.get(key), value)
 
     @classmethod
     def tearDownClass(cls):
