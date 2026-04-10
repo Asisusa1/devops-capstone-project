@@ -11,15 +11,17 @@ metadata:
 spec:
   workspaces:
     - name: pipeline-workspace
+
   params:
     - name: repo-url
     - name: branch
       default: main
+
   tasks:
     - name: init
       workspaces:
         - name: source
-          workspace: pipeline-workspace          
+          workspace: pipeline-workspace
       taskRef:
         name: cleanup
 
@@ -27,7 +29,7 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
-     taskRef:
+      taskRef:
         name: flake8
       params:
         - name: image
